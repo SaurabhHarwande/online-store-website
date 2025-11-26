@@ -1,0 +1,14 @@
+{
+	"folders": [
+		{
+			"path": "backend/product-catalog"
+		},
+		{
+			"path": "frontend"
+		},
+		{
+			"path": "project-plan"
+		}
+	],
+	"settings": {}
+}
