@@ -7,8 +7,12 @@
 			"path": "frontend"
 		},
 		{
+			"path": "backend/order-service"
+		},
+		{
 			"path": "project-plan"
 		}
 	],
-	"settings": {}
+	"settings": {
+	}
 }
