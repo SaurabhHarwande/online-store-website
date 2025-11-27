@@ -1,13 +1,13 @@
-package com.onlinestore.productcatalog.product_catalog;
+package com.onlinestore.productcatalog;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
-public class DemoApplication {
+public class ProductCatalogApplication {
 
 	public static void main(String[] args) {
-		SpringApplication.run(DemoApplication.class, args);
+		SpringApplication.run(ProductCatalogApplication.class, args);
 	}
 
 }

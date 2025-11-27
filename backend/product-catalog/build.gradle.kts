@@ -1,12 +1,12 @@
 plugins {
 	java
-	id("org.springframework.boot") version "3.5.7"
+	id("org.springframework.boot") version "4.0.0"
 	id("io.spring.dependency-management") version "1.1.7"
 }
 
-group = "com.onlinestore.productcatalog"
+group = "com.onlinestore"
 version = "0.0.1-SNAPSHOT"
-description = "Demo project for Spring Boot"
+description = "Product Catalog Service - Manages product information and inventory for the online store"
 
 java {
 	toolchain {
@@ -19,8 +19,8 @@ repositories {
 }
 
 dependencies {
-	implementation("org.springframework.boot:spring-boot-starter-web")
-	testImplementation("org.springframework.boot:spring-boot-starter-test")
+	implementation("org.springframework.boot:spring-boot-starter-webmvc")
+	testImplementation("org.springframework.boot:spring-boot-starter-webmvc-test")
 	testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
