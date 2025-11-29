@@ -1,0 +1,8 @@
+# Copy this file to terraform.tfvars and fill in your values
+
+utho_api_key = "your-utho-api-key-here"
+
+instance_name   = "development-machine"
+instance_dcslug = "innoida" # Options: innoida, inmumbaizone2, etc.
+instance_image  = "ubuntu-22.04-x64"
+instance_planid = "10001" # Check Utho dashboard for available plan IDs

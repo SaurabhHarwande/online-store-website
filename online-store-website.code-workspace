@@ -11,6 +11,9 @@
 		},
 		{
 			"path": "project-plan"
+		},
+		{
+			"path": "infrastructure"
 		}
 	],
 	"settings": {
