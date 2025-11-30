@@ -33,3 +33,22 @@ variable "instance_password" {
   type        = string
   default     = "randomStrongPassword" # Adjust based on your requirements
 }
+
+variable "github_token" {
+  description = "GitHub Personal Access Token for SSH key setup"
+  type        = string
+  sensitive   = true
+  default     = ""
+}
+
+variable "git_user_name" {
+  description = "Git user name for configuration"
+  type        = string
+  default     = "Dev Machine"
+}
+
+variable "git_user_email" {
+  description = "Git user email for configuration"
+  type        = string
+  default     = "dev@example.com"
+}

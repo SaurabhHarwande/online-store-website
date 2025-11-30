@@ -1,0 +1,18 @@
+---
+- name: Setup Development Machine
+  hosts: all
+  become: yes
+
+  vars:
+    # Required variables - must be passed via -e flag from Terraform
+    # No defaults provided - will fail if not supplied
+    github_token: "{{ github_token }}"
+    git_user_name: "{{ git_user_name }}"
+    git_user_email: "{{ git_user_email }}"
+
+  roles:
+    - common
+    - git-setup
+    - vscode-server
+    # - dotnet
+    # - java

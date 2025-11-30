@@ -1,0 +1,48 @@
+---
+- name: Set .NET version variable
+  set_fact:
+    dotnet_major_version: "10"
+    dotnet_package: "dotnet-sdk-10.0"
+
+- name: Check if dotnet is installed
+  command: dotnet --version
+  register: current_dotnet_version
+  changed_when: false
+  failed_when: false
+
+- name: Remove old .NET SDK versions if version mismatch
+  apt:
+    name: "dotnet-sdk-*"
+    state: absent
+  when:
+    - current_dotnet_version.rc == 0
+    - not current_dotnet_version.stdout.startswith(dotnet_major_version)
+
+- name: Add Microsoft package signing key
+  apt_key:
+    url: https://packages.microsoft.com/keys/microsoft.asc
+    state: present
+
+- name: Add Microsoft package repository for Ubuntu 24.04
+  apt_repository:
+    repo: "deb [arch=amd64] https://packages.microsoft.com/ubuntu/24.04/prod noble main"
+    state: present
+    filename: microsoft-prod
+
+- name: Update apt cache after adding Microsoft repository
+  apt:
+    update_cache: yes
+
+- name: Install .NET {{ dotnet_major_version }} SDK
+  apt:
+    name: "{{ dotnet_package }}"
+    state: present
+
+- name: Verify .NET installation
+  command: dotnet --version
+  register: dotnet_version
+  changed_when: false
+
+- name: Display .NET version
+  debug:
+    msg: "Installed .NET version: {{ dotnet_version.stdout }}"

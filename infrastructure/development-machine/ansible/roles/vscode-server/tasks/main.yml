@@ -1,0 +1,45 @@
+---
+- name: Create VS Code Server extensions directory
+  file:
+    path: /root/.vscode-server/extensions
+    state: directory
+    mode: '0755'
+
+- name: Download and install C# extension
+  shell: |
+    mkdir -p /tmp/vscode-extensions
+    cd /tmp/vscode-extensions
+    # Download C# extension
+    wget -q "https://marketplace.visualstudio.com/_apis/public/gallery/publishers/ms-dotnettools/vsextensions/csharp/latest/vspackage" -O csharp.vsix
+    # Extract to extensions directory
+    unzip -q csharp.vsix -d /root/.vscode-server/extensions/ms-dotnettools.csharp
+  args:
+    creates: /root/.vscode-server/extensions/ms-dotnettools.csharp
+
+- name: Download and install Extension Pack for Java
+  shell: |
+    mkdir -p /tmp/vscode-extensions
+    cd /tmp/vscode-extensions
+    # Download Java extension pack
+    wget -q "https://marketplace.visualstudio.com/_apis/public/gallery/publishers/vscjava/vsextensions/vscode-java-pack/latest/vspackage" -O java-pack.vsix
+    # Extract to extensions directory
+    unzip -q java-pack.vsix -d /root/.vscode-server/extensions/vscjava.vscode-java-pack
+  args:
+    creates: /root/.vscode-server/extensions/vscjava.vscode-java-pack
+
+- name: Install unzip if not present
+  apt:
+    name: unzip
+    state: present
+
+- name: Clean up temporary files
+  file:
+    path: /tmp/vscode-extensions
+    state: absent
+
+- name: Display Remote SSH connection info
+  debug:
+    msg:
+      - "VS Code Remote SSH is ready"
+      - "Connect using: ssh root@{{ ansible_host }}"
+      - "Extensions will be available when you connect via VS Code Remote SSH"

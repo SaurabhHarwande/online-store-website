@@ -1,0 +1,53 @@
+---
+- name: Install Git
+  apt:
+    name: git
+    state: present
+    update_cache: yes
+
+- name: Ensure .ssh directory exists
+  file:
+    path: /root/.ssh
+    state: directory
+    mode: '0700'
+
+- name: Check if SSH key already exists
+  stat:
+    path: /root/.ssh/id_ed25519
+  register: ssh_key_stat
+
+- name: Generate SSH key for GitHub
+  command: ssh-keygen -t ed25519 -C "dev-machine-{{ ansible_hostname }}" -f /root/.ssh/id_ed25519 -N ""
+  when: not ssh_key_stat.stat.exists
+
+- name: Read public key
+  slurp:
+    src: /root/.ssh/id_ed25519.pub
+  register: public_key_content
+
+- name: Display public key
+  debug:
+    msg: "SSH Public Key: {{ public_key_content.content | b64decode }}"
+
+- name: Configure Git global settings
+  git_config:
+    name: "{{ item.name }}"
+    value: "{{ item.value }}"
+    scope: global
+  loop:
+    - { name: 'user.name', value: "{{ git_user_name }}" }
+    - { name: 'user.email', value: "{{ git_user_email }}" }
+
+- name: Add github.com to known_hosts
+  known_hosts:
+    name: github.com
+    key: "{{ lookup('pipe', 'ssh-keyscan -t rsa github.com') }}"
+    path: /root/.ssh/known_hosts
+    state: present
+
+- name: Display setup complete message
+  debug:
+    msg:
+      - "Git setup complete!"
+      - "SSH key has been generated and will be added to GitHub by Terraform"
+      - "You can now clone repositories with: git clone git@github.com:username/repo.git"
