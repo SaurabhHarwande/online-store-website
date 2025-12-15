@@ -23,8 +23,3 @@ output "dns_hostname" {
   description = "The DNS hostname for the instance"
   value       = "${utho_dns_record.development_instance_dns_record.hostname}.${utho_dns_record.development_instance_dns_record.domain}"
 }
-
-output "github_ssh_key_id" {
-  description = "The ID of the SSH key added to GitHub"
-  value       = github_user_ssh_key.dev_machine_key.id
-}

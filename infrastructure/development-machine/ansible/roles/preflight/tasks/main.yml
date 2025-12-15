@@ -1,0 +1,8 @@
+---
+- name: Remove devmachine from known_hosts
+  delegate_to: localhost
+  become: no
+  known_hosts:
+    name: devmachine.utho.saurabhharwande.com
+    state: absent
+  run_once: true

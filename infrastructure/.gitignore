@@ -35,3 +35,9 @@ terraform.rc
 
 # Ignore plan files
 *.tfplan
+
+# Ignore environment files with secrets
+.env
+**/.env
+
+**/ansible/**/secrets.yml

@@ -29,7 +29,7 @@ resource "utho_cloud_instance" "development_instance" {
   enable_publicip = true
   billingcycle    = "hourly"
   planid          = var.instance_planid
-  sshkeys         = "74132294"
+  sshkeys         = "74132335"
   enablebackup    = false
 
   lifecycle {
@@ -55,42 +55,41 @@ resource "utho_dns_record" "development_instance_dns_record" {
   depends_on = [utho_cloud_instance.development_instance]
 }
 
-# Run Ansible to configure the development machine
+# Null resource to run Ansible playbook after instance is ready
 resource "null_resource" "ansible_provisioner" {
+  # Trigger provisioning when instance changes or variables change
   triggers = {
-    instance_id = utho_cloud_instance.development_instance.id
-    dns_record_id = utho_dns_record.development_instance_dns_record.id
+    instance_id      = utho_cloud_instance.development_instance.id
+    instance_ip      = utho_cloud_instance.development_instance.ip
+    dns_hostname     = "${utho_dns_record.development_instance_dns_record.hostname}.${utho_dns_record.development_instance_dns_record.domain}"
+    github_token     = var.github_token
+    git_user_name    = var.git_user_name
+    git_user_email   = var.git_user_email
   }
 
+  # Wait for SSH to become available
   provisioner "local-exec" {
     command = <<-EOT
-      ansible-playbook ../ansible/playbooks/setup-dev-machine.yml \
+      echo "Waiting for SSH to become available on ${utho_dns_record.development_instance_dns_record.hostname}.${utho_dns_record.development_instance_dns_record.domain}..."
+      timeout 300 bash -c 'until ssh -o StrictHostKeyChecking=no -o ConnectTimeout=5 root@${utho_dns_record.development_instance_dns_record.hostname}.${utho_dns_record.development_instance_dns_record.domain} echo "SSH is ready"; do sleep 5; done'
+    EOT
+  }
+
+  # Run Ansible playbook
+  provisioner "local-exec" {
+    command = <<-EOT
+      cd ../ansible && \
+      ansible-playbook playbooks/setup-dev-machine.yml \
+        -i inventory.yml \
+        -e "ansible_host=${utho_dns_record.development_instance_dns_record.hostname}.${utho_dns_record.development_instance_dns_record.domain}" \
         -e "github_token=${var.github_token}" \
         -e "git_user_name='${var.git_user_name}'" \
-        -e "git_user_email='${var.git_user_email}'" \
-        -e "ansible_host=devmachine.utho.saurabhharwande.com"
+        -e "git_user_email='${var.git_user_email}'"
     EOT
-
-    working_dir = path.module
   }
 
   depends_on = [
     utho_cloud_instance.development_instance,
     utho_dns_record.development_instance_dns_record
   ]
-}
-
-# Retrieve the SSH public key from the remote machine
-data "external" "ssh_public_key" {
-  program = ["sh", "-c", "ssh -o StrictHostKeyChecking=no root@devmachine.utho.saurabhharwande.com 'cat /root/.ssh/id_ed25519.pub' | jq -Rs '{key: .}'"]
-
-  depends_on = [null_resource.ansible_provisioner]
-}
-
-# Upload SSH key to GitHub
-resource "github_user_ssh_key" "dev_machine_key" {
-  title = "development-machine-${var.instance_name}"
-  key   = data.external.ssh_public_key.result.key
-
-  depends_on = [data.external.ssh_public_key]
 }

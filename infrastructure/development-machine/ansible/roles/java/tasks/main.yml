@@ -1,86 +1,89 @@
 ---
-- name: Set Java version variable
+- name: Set Java version variables
   set_fact:
-    java_version: "25"
-    java_install_path: "/opt/jdk-25"
+    java_version: "25.0.1"
+    java_build_hash: "2fbf10d8c78e40bd87641c434705079d"
+    java_build_number: "8"
+    java_install_dir: "/usr/share/openjdk"
+    java_temp_dir: "/tmp/openjdk-install"
 
-- name: Check if Java is already installed
-  stat:
-    path: "{{ java_install_path }}/bin/java"
-  register: java_binary
-
-- name: Get current Java version if installed
-  shell: "{{ java_install_path }}/bin/java --version 2>&1 | head -1"
+- name: Check if Java is already installed with correct version
+  command: java --version
   register: current_java_version
-  when: java_binary.stat.exists
   changed_when: false
   failed_when: false
 
-- name: Remove old Java installations
-  file:
-    path: "/opt/jdk-*"
-    state: absent
-  when: java_binary.stat.exists and 'openjdk ' + java_version not in current_java_version.stdout | default('')
+- name: Skip installation if correct version already installed
+  debug:
+    msg: "OpenJDK {{ java_version }} is already installed"
+  when:
+    - current_java_version.rc == 0
+    - java_version in current_java_version.stdout
 
-- name: Download Oracle JDK {{ java_version }}
+- name: Create temporary download directory
+  file:
+    path: "{{ java_temp_dir }}"
+    state: directory
+    mode: "0755"
+  when: current_java_version.rc != 0 or java_version not in current_java_version.stdout
+
+- name: Download OpenJDK {{ java_version }}
   get_url:
-    url: "https://download.oracle.com/java/{{ java_version }}/latest/jdk-{{ java_version }}_linux-x64_bin.tar.gz"
-    dest: "/tmp/jdk-{{ java_version }}.tar.gz"
-    mode: '0644'
-  when: not java_binary.stat.exists or 'openjdk ' + java_version not in current_java_version.stdout | default('')
+    url: "https://download.java.net/java/GA/jdk{{ java_version }}/{{ java_build_hash }}/{{ java_build_number }}/GPL/openjdk-{{ java_version }}_linux-x64_bin.tar.gz"
+    dest: "{{ java_temp_dir }}/openjdk.tar.gz"
+    mode: "0644"
+  when: current_java_version.rc != 0 or java_version not in current_java_version.stdout
 
 - name: Create Java installation directory
   file:
-    path: "{{ java_install_path }}"
+    path: "{{ java_install_dir }}"
     state: directory
-    mode: '0755'
+    mode: "0755"
+  when: current_java_version.rc != 0 or java_version not in current_java_version.stdout
 
-- name: Extract JDK {{ java_version }}
+- name: Extract OpenJDK to installation directory
   unarchive:
-    src: "/tmp/jdk-{{ java_version }}.tar.gz"
-    dest: "{{ java_install_path }}"
+    src: "{{ java_temp_dir }}/openjdk.tar.gz"
+    dest: "{{ java_install_dir }}"
     remote_src: yes
     extra_opts: [--strip-components=1]
-  when: not java_binary.stat.exists or 'openjdk ' + java_version not in current_java_version.stdout | default('')
+  when: current_java_version.rc != 0 or java_version not in current_java_version.stdout
 
-- name: Set JAVA_HOME in /etc/environment
+- name: Set JAVA_HOME environment variable system-wide
   lineinfile:
     path: /etc/environment
-    regexp: '^JAVA_HOME='
-    line: 'JAVA_HOME={{ java_install_path }}'
+    regexp: "^JAVA_HOME="
+    line: "JAVA_HOME={{ java_install_dir }}"
     state: present
+  when: current_java_version.rc != 0 or java_version not in current_java_version.stdout
 
-- name: Add Java to PATH in /etc/environment
-  lineinfile:
-    path: /etc/environment
-    regexp: '^PATH='
-    line: 'PATH="{{ java_install_path }}/bin:{{ ansible_env.PATH }}"'
-    state: present
+- name: Create symlink to java in /usr/bin
+  file:
+    src: "{{ java_install_dir }}/bin/java"
+    dest: /usr/bin/java
+    state: link
+    force: yes
+  when: current_java_version.rc != 0 or java_version not in current_java_version.stdout
 
-- name: Update alternatives for java
-  alternatives:
-    name: java
-    link: /usr/bin/java
-    path: "{{ java_install_path }}/bin/java"
-    priority: 100
+- name: Create symlink to javac in /usr/bin
+  file:
+    src: "{{ java_install_dir }}/bin/javac"
+    dest: /usr/bin/javac
+    state: link
+    force: yes
+  when: current_java_version.rc != 0 or java_version not in current_java_version.stdout
 
-- name: Update alternatives for javac
-  alternatives:
-    name: javac
-    link: /usr/bin/javac
-    path: "{{ java_install_path }}/bin/javac"
-    priority: 100
+- name: Clean up temporary download directory
+  file:
+    path: "{{ java_temp_dir }}"
+    state: absent
+  when: current_java_version.rc != 0 or java_version not in current_java_version.stdout
 
 - name: Verify Java installation
-  shell: "{{ java_install_path }}/bin/java --version"
-  register: java_version_output
+  command: java --version
+  register: java_version_check
   changed_when: false
 
-- name: Display Java version
+- name: Display installed Java version
   debug:
-    msg: "Installed Java version: {{ java_version_output.stdout }}"
-
-- name: Clean up downloaded tar file
-  file:
-    path: "/tmp/jdk-{{ java_version }}.tar.gz"
-    state: absent
+    msg: "Installed OpenJDK version: {{ java_version_check.stdout_lines[0] }}"

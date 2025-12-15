@@ -1,7 +1,6 @@
 ---
 - name: Setup Development Machine
   hosts: all
-  become: yes
 
   vars:
     # Required variables - must be passed via -e flag from Terraform
@@ -11,8 +10,9 @@
     git_user_email: "{{ git_user_email }}"
 
   roles:
+    - preflight
     - common
     - git-setup
-    - vscode-server
-    # - dotnet
-    # - java
+    # - vscode-server
+    - dotnet
+    - java
