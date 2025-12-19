@@ -13,6 +13,7 @@
     - preflight
     - common
     - git-setup
+    - repo-checkout
     # - vscode-server
     - dotnet
     - java

@@ -17,7 +17,7 @@
   register: ssh_key_stat
 
 - name: Generate SSH key for GitHub
-  command: ssh-keygen -t ed25519 -C "dev-machine-{{ ansible_hostname }}" -f /root/.ssh/id_ed25519 -N ""
+  command: ssh-keygen -t ed25519 -C "cloud-dev-machine" -f /root/.ssh/id_ed25519 -N ""
   when: not ssh_key_stat.stat.exists
 
 - name: Read public key
@@ -45,22 +45,23 @@
     path: /root/.ssh/known_hosts
     state: present
 
-- name: Check if SSH key already exists on GitHub
-  uri:
-    url: https://api.github.com/user/keys
-    method: GET
-    headers:
-      Authorization: "token {{ github_token }}"
-      Accept: "application/vnd.github.v3+json"
-    return_content: yes
-  register: github_ssh_keys
+- name: Authenticate GitHub CLI
+  shell: echo "{{ github_token }}" | gh auth login --with-token
   when: github_token is defined and github_token != ""
   no_log: true
 
-- name: Check if our SSH key is already in the list
-  set_fact:
-    ssh_key_exists: "{{ github_ssh_keys.json | selectattr('title', 'equalto', 'dev-machine-' + ansible_hostname) | list | length > 0 }}"
+- name: Check if cloud-dev-machine SSH key exists on GitHub
+  shell: gh ssh-key list | grep "cloud-dev-machine" | awk -F'\t' '{print $4}'
   when: github_token is defined and github_token != ""
+  register: existing_key_id
+  changed_when: false
+  failed_when: false
+
+- name: Delete existing cloud-dev-machine SSH key from GitHub
+  shell: gh ssh-key delete "{{ existing_key_id.stdout }}" --yes
+  when:
+    - github_token is defined and github_token != ""
+    - existing_key_id.stdout != ""
 
 - name: Add SSH public key to GitHub via API
   uri:
@@ -70,13 +71,11 @@
       Authorization: "token {{ github_token }}"
       Accept: "application/vnd.github.v3+json"
     body:
-      title: "dev-machine-{{ ansible_hostname }}"
+      title: "cloud-dev-machine"
       key: "{{ public_key_content.content | b64decode | trim }}"
     body_format: json
     status_code: 201
-  when:
-    - github_token is defined and github_token != ""
-    - not ssh_key_exists
+  when: github_token is defined and github_token != ""
   no_log: true
 
 - name: Display setup complete message
