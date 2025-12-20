@@ -4,6 +4,12 @@ variable "utho_api_key" {
   sensitive   = true
 }
 
+variable "utho_ssh_key" {
+  description = "Utho Connection SSH Key"
+  type        = string
+  sensitive   = true
+}
+
 variable "instance_name" {
   description = "Name of the cloud instance"
   type        = string
