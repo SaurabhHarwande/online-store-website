@@ -1,36 +1,45 @@
 ---
-- name: Create VS Code Server extensions directory
-  file:
-    path: /root/.vscode-server/extensions
-    state: directory
-    mode: '0755'
-
-- name: Download and install C# extension
-  shell: |
-    mkdir -p /tmp/vscode-extensions
-    cd /tmp/vscode-extensions
-    # Download C# extension
-    wget -q "https://marketplace.visualstudio.com/_apis/public/gallery/publishers/ms-dotnettools/vsextensions/csharp/latest/vspackage" -O csharp.vsix
-    # Extract to extensions directory
-    unzip -q csharp.vsix -d /root/.vscode-server/extensions/ms-dotnettools.csharp
-  args:
-    creates: /root/.vscode-server/extensions/ms-dotnettools.csharp
-
-- name: Download and install Extension Pack for Java
-  shell: |
-    mkdir -p /tmp/vscode-extensions
-    cd /tmp/vscode-extensions
-    # Download Java extension pack
-    wget -q "https://marketplace.visualstudio.com/_apis/public/gallery/publishers/vscjava/vsextensions/vscode-java-pack/latest/vspackage" -O java-pack.vsix
-    # Extract to extensions directory
-    unzip -q java-pack.vsix -d /root/.vscode-server/extensions/vscjava.vscode-java-pack
-  args:
-    creates: /root/.vscode-server/extensions/vscjava.vscode-java-pack
+- name: Define VS Code extensions to install
+  set_fact:
+    vscode_extensions:
+      - publisher: ms-dotnettools
+        extension: csharp
+        id: ms-dotnettools.csharp
+      - publisher: vscjava
+        extension: vscode-java-pack
+        id: vscjava.vscode-java-pack
+      - publisher: Vue
+        extension: volar
+        id: Vue.volar
+      - publisher: humao
+        extension: rest-client
+        id: humao.rest-client
 
 - name: Install unzip if not present
   apt:
     name: unzip
     state: present
+
+- name: Create VS Code Server extensions directory
+  file:
+    path: /root/.vscode-server/extensions
+    state: directory
+    mode: "0755"
+
+- name: Create temporary extensions directory
+  file:
+    path: /tmp/vscode-extensions
+    state: directory
+    mode: "0755"
+
+- name: Download and install VS Code extensions
+  shell: |
+    cd /tmp/vscode-extensions
+    wget -q "https://marketplace.visualstudio.com/_apis/public/gallery/publishers/{{ item.publisher }}/vsextensions/{{ item.extension }}/latest/vspackage" -O "{{ item.id }}.vsix"
+    unzip -q "{{ item.id }}.vsix" -d "/root/.vscode-server/extensions/{{ item.id }}"
+  args:
+    creates: "/root/.vscode-server/extensions/{{ item.id }}"
+  loop: "{{ vscode_extensions }}"
 
 - name: Clean up temporary files
   file:
