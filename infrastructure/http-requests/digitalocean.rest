@@ -1,0 +1,17 @@
+### Images
+curl -X GET \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer {{$dotenv testvar}}" \
+  "https://api.digitalocean.com/v2/images?page=2&per_page=1000"
+
+### Sizes
+curl -X GET \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer {{$dotenv testvar}}" \
+  "https://api.digitalocean.com/v2/sizes?page=1&per_page=1000"
+
+### SSH Keys
+curl -X GET \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer {{$dotenv testvar}}" \
+  "https://api.digitalocean.com/v2/account/keys"
