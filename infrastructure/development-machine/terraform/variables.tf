@@ -40,6 +40,20 @@ variable "instance_password" {
   default     = "randomStrongPassword" # Adjust based on your requirements
 }
 
+variable "digital_ocean" {
+  description = "Digital Ocean variables"
+  type = object({
+    token = string
+    droplet = object({
+      name = string
+      region = string
+      image = string
+      size = string
+      ssh_keys = list(string)
+    })
+  })
+}
+
 variable "github_token" {
   description = "GitHub Personal Access Token for SSH key setup"
   type        = string

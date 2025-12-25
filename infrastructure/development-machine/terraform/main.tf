@@ -1,58 +1,37 @@
 terraform {
   required_providers {
-    utho = {
-      source  = "uthoplatforms/utho"
-      version = "~> 0.6.4"
-    }
     github = {
       source  = "integrations/github"
       version = "~> 6.0"
     }
+    digitalocean = {
+      source  = "digitalocean/digitalocean"
+      version = "~> 2.0"
+    }
   }
 }
 
-provider "utho" {
-  token = var.utho_api_key
-  # You can also use environment variable: UTHO_TOKEN
+provider "digitalocean" {
+  token = var.digital_ocean.token
 }
 
 provider "github" {
   token = var.github_token
 }
 
-# Create cloud instance
-resource "utho_cloud_instance" "development_instance" {
-  dcslug          = var.instance_dcslug
-  image           = var.instance_image
-  name            = var.instance_name
-  root_password   = var.instance_password
-  enable_publicip = true
-  billingcycle    = "hourly"
-  planid          = var.instance_planid
-  sshkeys         = var.utho_ssh_key
-  enablebackup    = false
-
-  lifecycle {
-    ignore_changes = [
-      root_password,  # Ignore password changes after creation
-      vpc_id,         # Ignore VPC changes (if not explicitly set)
-    ]
-  }
+resource "digitalocean_droplet" "development-machine" {
+  image = var.digital_ocean.droplet.image
+  name = var.digital_ocean.droplet.name
+  region = var.digital_ocean.droplet.region
+  size = var.digital_ocean.droplet.size
+  ssh_keys = var.digital_ocean.droplet.ssh_keys
 }
 
-# Create a DNS record for connecting to the server
-resource "utho_dns_record" "development_instance_dns_record" {
-  domain    = "utho.saurabhharwande.com"
-  hostname  = "devmachine"
-  porttype  = "TCP"
-  ttl       = "3600"
-  type      = "A"
-  value     = utho_cloud_instance.development_instance.ip
-  priority  = ""
-  port      = ""
-  weight    = ""
-
-  depends_on = [utho_cloud_instance.development_instance]
+resource "digitalocean_record" "developmentmachine-do-saurabhharwande-com" {
+  type = "A"
+  domain = "do.saurabhharwande.com"
+  value = "${digitalocean_droplet.development-machine.ipv4_address}"
+  name = "developmentmachine"
 }
 
 # # Null resource to run Ansible playbook after instance is ready

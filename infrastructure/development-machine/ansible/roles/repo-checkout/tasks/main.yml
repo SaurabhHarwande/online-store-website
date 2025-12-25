@@ -1,19 +1,19 @@
 ---
 - name: Ensure workspace directory exists
   file:
-    path: /root/workspace
+    path: /root/source/microservices-learner
     state: directory
     mode: "0755"
 
 - name: Check if repository already exists
   stat:
-    path: root/source/microservices-learner/online-store-website
+    path: /root/source/microservices-learner/online-store-website
   register: repo_stat
 
 - name: Clone online-store-website repository
   git:
     repo: git@github.com:SaurabhHarwande/online-store-website.git
-    dest: root/source/microservices-learner/online-store-website
+    dest: /root/source/microservices-learner/online-store-website
     version: main
     accept_hostkey: yes
   when: not repo_stat.stat.exists
@@ -21,7 +21,7 @@
 - name: Update repository if it already exists
   git:
     repo: git@github.com:SaurabhHarwande/online-store-website.git
-    dest: root/source/microservices-learner/online-store-website
+    dest: /root/source/microservices-learner/online-store-website
     version: main
     update: yes
   when: repo_stat.stat.exists
@@ -30,4 +30,4 @@
   debug:
     msg:
       - "Repository checkout complete!"
-      - "Location: root/source/microservices-learner/online-store-website"
+      - "Location: /root/source/microservices-learner/online-store-website"
