@@ -1,0 +1,17 @@
+{
+    "name": "online-store-website-devcontainer",
+    "image": "mcr.microsoft.com/dotnet/sdk:10.0",
+    "customizations": {
+        "vscode": {
+            "settings": {
+                "editor.formatOnSave": true
+            },
+            "extensions": [
+                "ms-dotnettools.csharp"
+            ]
+        }
+    },
+    "mounts": [
+        "source=~/.ssh,target=/home/vscode/.ssh,type=bind,readonly"
+    ]
+}
